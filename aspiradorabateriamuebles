@@ -1,0 +1,131 @@
+import java.util.Random;
+
+public class AspiradoraBateriaMuebles {
+    private static final int FILAS = 7;
+    private static final int COLUMNAS = 8;
+
+    private static final char SUCIO = '0';
+    private static final char LIMPIO = '.';
+    private static final char ASPIRADORA = 'O';
+    private static final char MUEBLE = 'M';
+
+    private char[][] superficie;
+    private int posX;
+    private int posY;
+
+    private Random random = new Random();
+    private int pasos = 0;
+    private int limpiadas = 0;
+    private int bateria;
+
+    private int capacidadBolsa = 40;
+    private int contenidoBolsa = 0;
+
+    public AspiradoraBateriaMuebles() {
+        superficie = new char[FILAS][COLUMNAS];
+        bateria = 5 * FILAS * COLUMNAS;
+        inicializarSuperficie();
+    }
+
+    private void inicializarSuperficie() {
+        for (int i = 0; i < FILAS; i++) {
+            for (int j = 0; j < COLUMNAS; j++) {
+                superficie[i][j] = SUCIO;
+            }
+        }
+
+        superficie[1][1] = MUEBLE;
+        superficie[2][4] = MUEBLE;
+        superficie[4][2] = MUEBLE;
+        superficie[5][6] = MUEBLE;
+        superficie[3][0] = MUEBLE;
+
+        // Posición inicial de la aspiradora
+        posX = FILAS / 2;
+        posY = COLUMNAS / 2;
+        superficie[posX][posY] = ASPIRADORA;
+    }
+
+    private void mostrarSuperficie() {
+        for (int i = 0; i < FILAS; i++) {
+            for (int j = 0; j < COLUMNAS; j++) {
+                System.out.print(superficie[i][j] + " ");
+            }
+            System.out.println();
+        }
+        System.out.println("Suciedad restante: " + contarSucias() + " celdas");
+        System.out.println("Batería restante: " + bateria);
+        System.out.println();
+    }
+
+    private int contarSucias() {
+        int contador = 0;
+        for (int i = 0; i < FILAS; i++) {
+            for (int j = 0; j < COLUMNAS; j++) {
+                if (superficie[i][j] == SUCIO) contador++;
+            }
+        }
+        return contador;
+    }
+
+    private void mover() {
+        int nuevaX = posX;
+        int nuevaY = posY;
+
+        int dir = random.nextInt(4);
+        switch (dir) {
+            case 0: nuevaX--; break; // arriba
+            case 1: nuevaX++; break; // abajo
+            case 2: nuevaY--; break; // izquierda
+            case 3: nuevaY++; break; // derecha
+        }
+
+        if (nuevaX >= 0 && nuevaX < FILAS && nuevaY >= 0 && nuevaY < COLUMNAS
+                && superficie[nuevaX][nuevaY] != MUEBLE) {
+
+            superficie[posX][posY] = LIMPIO;
+
+            if (superficie[nuevaX][nuevaY] == SUCIO) {
+                if (contenidoBolsa < capacidadBolsa) {
+                    limpiadas++;
+                    contenidoBolsa++;
+                } else {
+                    superficie[posX][posY] = ASPIRADORA;
+                    return;
+                }
+            }
+
+            posX = nuevaX;
+            posY = nuevaY;
+            superficie[posX][posY] = ASPIRADORA;
+            pasos++;
+            bateria--;
+        }
+    }
+
+    public void iniciarLimpieza() throws InterruptedException {
+        while (contarSucias() > 0 && bateria > 0 && contenidoBolsa < capacidadBolsa) {
+            mostrarSuperficie();
+            mover();
+            Thread.sleep(150);
+        }
+
+        mostrarSuperficie();
+
+        if (contarSucias() == 0) {
+            System.out.println("Limpieza completa");
+        } else if (bateria == 0) {
+            System.out.println("Batería agotada antes de terminar.");
+        } else if (contenidoBolsa >= capacidadBolsa) {
+            System.out.println("Bolsa de basura llena. Es necesario vaciarla.");
+        }
+
+        System.out.println("Pasos realizados: " + pasos);
+        System.out.println("Celdas limpiadas: " + limpiadas);
+    }
+
+    public static void main(String[] args) throws InterruptedException {
+        AspiradoraBateriaMuebles robot = new AspiradoraBateriaMuebles();
+        robot.iniciarLimpieza();
+    }
+}
